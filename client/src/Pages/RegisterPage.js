@@ -17,10 +17,11 @@ export default function RegisterPage() {
             });
 
             if (response.ok) {
-                // Handle successful response
                 console.log('User registered successfully');
+                // Optionally, you can reset the form here
+                setUsername('');
+                setPassword('');
             } else {
-                // Handle error response
                 console.error('Error registering user:', response.statusText);
             }
         } catch (error) {
