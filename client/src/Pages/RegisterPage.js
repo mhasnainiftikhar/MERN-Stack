@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 export default function RegisterPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setMessage('');
 
         try {
             const response = await fetch('http://localhost:4000/register', {
@@ -17,15 +19,13 @@ export default function RegisterPage() {
             });
 
             if (response.ok) {
-                console.log('User registered successfully');
-                // Optionally, you can reset the form here
-                setUsername('');
-                setPassword('');
+                setMessage('User registered successfully');
             } else {
-                console.error('Error registering user:', response.statusText);
+                const errorText = await response.text();
+                setMessage(`Error registering user: ${errorText}`);
             }
         } catch (error) {
-            console.error('Failed to fetch:', error);
+            setMessage('Failed to fetch: ' + error.message);
         }
     };
 
@@ -45,6 +45,7 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
             />
             <button type="submit">Register</button>
+            {message && <p>{message}</p>}
         </form>
     );
 }

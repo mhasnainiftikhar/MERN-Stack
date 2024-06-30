@@ -2,8 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs'); // Import bcryptjs library
-const User = require('./Models/user'); // Adjust the path as per your project structure
+const bcrypt = require('bcrypt');
+const User = require('./Models/user');
 
 const app = express();
 const port = 4000;
@@ -25,22 +25,39 @@ app.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // Check if username already exists
-        let existingUser = await User.findOne({ username });
-
-        if (existingUser) {
-            return res.status(400).send('Username already exists');
-        }
-
-        // Hash the password before saving
-        const hashedPassword = await bcrypt.hash(password, 10); // Hash password with salt factor of 10
-
-        // Create a new user with hashed password
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({ username, password: hashedPassword });
         await newUser.save();
         res.status(201).send('User registered successfully');
     } catch (error) {
-        console.error('Error registering user:', error);
+        if (error.code === 11000) { // Duplicate key error
+            console.error('Duplicate username error:', error);
+            res.status(400).send('Username already exists');
+        } else {
+            console.error('Error registering user:', error);
+            res.status(500).send('Internal Server Error');
+        }
+    }
+});
+
+// Login endpoint
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(400).send('Invalid username or password');
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).send('Invalid username or password');
+        }
+
+        res.status(200).send('Login successful');
+    } catch (error) {
+        console.error('Error logging in user:', error);
         res.status(500).send('Internal Server Error');
     }
 });
